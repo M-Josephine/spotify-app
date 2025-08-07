@@ -53,21 +53,6 @@ def get_top_tracks(time_range, track_nb, offset, sp):
     
     return track_ids
 
-st.header("Let's get your Spotify top tracks", divider = 'green')
-# widget to choose between long / medium / short term
-st.write('The recommended tracks will be generated based on your Spotify top tracks, as well as track features such as danceability or popularity, that you will be able to tune a little further.')
-time_range= st.pills("Spotify listening period:", ['short_term', 'medium_term', 'long_term'])
-
-# Other args
-track_nb = 5
-offset = 0
-scope = "user-top-read"
-
-sp = api_spotify_auth(scope)
-
-track_ids = get_top_tracks(time_range, track_nb, offset, sp)
-
-# st.write(track_ids)
 
 ############################### RECOMMENDATION ########################################
 # Reccobeats 
@@ -259,6 +244,22 @@ def play_track(recommendation):
         # Display player
         components.html(track_embed_code, height=352)
 
+
+############################### RUN GET TOP TRACKS + RECOMMENDATION + PLAYER ########################################
+
+st.header("Let's get your Spotify top tracks", divider = 'green')
+# widget to choose between long / medium / short term
+st.write('The recommended tracks will be generated based on your Spotify top tracks, as well as track features such as danceability or popularity, that you will be able to tune a little further.')
+time_range= st.pills("Spotify listening period:", ['short_term', 'medium_term', 'long_term'])
+
+# Other args
+track_nb = 5
+offset = 0
+scope = "user-top-read"
+
+sp = api_spotify_auth(scope)
+
+track_ids = get_top_tracks(time_range, track_nb, offset, sp)
 
 
 # Initialize ags for recommendation
