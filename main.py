@@ -47,13 +47,13 @@ def get_top_tracks(time_range, track_nb, offset, sp):
     df_tracks = pd.DataFrame(track_details)
     
     #replace by st.dataframe
-    st.dataframe(df_tracks)
+    st.dataframe(df_tracks, hide_index=True)
     
     return track_ids
 
 st.header("Let's get your Spotify top tracks", divider = 'green')
 # widget to choose between long / medium / short term
-st.write('The recommended tracks will be based on your Spotify top tracks, as well as track features such as danceability or popularity, that you will be able to tune a little further.')
+st.write('The recommended tracks will be generated based on your Spotify top tracks, as well as track features such as danceability or popularity, that you will be able to tune a little further.')
 time_range= st.pills("Spotify listening period:", ['short_term', 'medium_term', 'long_term'])
 
 # Other args
@@ -127,7 +127,7 @@ def build_params(seeds):
     # 0 to 250 (BPM)
     enable_tempo = st.toggle("Select track tempo")
     if enable_tempo:
-        tempo = st.slider("Tempo :", 1, 250, 1)
+        tempo = st.slider("Tempo (bpm) :", 1, 250, 1)
     else:
         tempo = None
 
@@ -136,7 +136,7 @@ def build_params(seeds):
 
     # Can be 1 to 100
     # size = st.number_input("Insert a number of track", min_value = 1, max_value = 100)
-    size = 10
+    size = 1
 
     #Initialize params dico
     recommended_track_params = {
@@ -231,9 +231,39 @@ url = "https://api.reccobeats.com/v1/track/recommendation"
 # Generate a list a recommended tracks
 st.header("Let the magic works :sparkles:", divider = 'green')
 left, middle, right = st.columns(3)
+recommendation = get_recommendation(url, recommended_track_params)
 if middle.button("Generate my tracks", icon="🎶"):
-    recommendation = get_recommendation(url, recommended_track_params)
+    # recommendation = get_recommendation(url, recommended_track_params)
 
     # Display the recommended tracks
     
-    st.dataframe(recommendation)
+    st.dataframe(recommendation, hide_index=True)
+
+############################### Save tracks to user's liked songs playlist ########################################
+
+
+# Save track for current user (to liked song playlist)
+def save_track_to_liked_songs(recommendation):
+
+    # Authenticate to API with the appropriate scope
+    sp = api_spotify_auth("user-library-modify")
+
+    # Retrieve Ids from Spotify URLS in recommendation dico
+    recommended_track_spotify_id = []
+    track_number = len(recommendation)
+    for i in range(track_number):
+        track_spotify_URL = recommendation[i]['URL']
+        track_spotify_id = re.split("/", track_spotify_URL)[-1]
+        recommended_track_spotify_id.append(track_spotify_id)
+    response = sp.current_user_saved_tracks_add(tracks=recommended_track_spotify_id)
+    return response
+
+# Save tracks
+st.header("Love the tracks?", divider = 'green')
+left, middle, right = st.columns(3)
+if middle.button("Save my tracks", icon="💾"):
+    
+    #Save tracks
+    saving_track = save_track_to_liked_songs(recommendation)
+    if saving_track == None:
+        st.write("Your tracks have been saved! 🎉")
