@@ -5,6 +5,8 @@ import streamlit as st
 import pandas as pd
 import re
 import requests
+import streamlit.components.v1 as components
+
 
 # Main script
 ############################### Header ########################################
@@ -218,6 +220,47 @@ def display_summary(recommended_track_params):
             st.write(f"**{formatted_name}** : {param_value}")
         
 
+############################### Save tracks to user's liked songs playlist ########################################
+
+
+# Save track for current user (to liked song playlist)
+# Not needed as the player has a feature to save the track
+# def save_track_to_liked_songs(recommendation):
+
+#     # Authenticate to API with the appropriate scope
+#     sp = api_spotify_auth("user-library-modify")
+
+#     # Retrieve Ids from Spotify URLS in recommendation dico
+#     recommended_track_spotify_id = []
+#     track_number = len(recommendation)
+#     for i in range(track_number):
+#         track_spotify_URL = recommendation[i]['URL']
+#         track_spotify_id = re.split("/", track_spotify_URL)[-1]
+#         recommended_track_spotify_id.append(track_spotify_id)
+
+#     response = sp.current_user_saved_tracks_add(tracks=recommended_track_spotify_id)
+#     return response
+
+# Play and save the track
+def play_track(recommendation):
+    track_number = len(recommendation)
+    for i in range(track_number):
+        track_spotify_URL = recommendation[i]['URL']
+        track_spotify_id = re.split("/", track_spotify_URL)[-1]
+        track_embed_code = f"""
+            <iframe style="border-radius:12px" 
+                    src="https://open.spotify.com/embed/track/{track_spotify_id}" 
+                    width="100%" height="352" 
+                    frameBorder="0" allowfullscreen="" 
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+                    loading="lazy"></iframe>
+            """
+    
+        # Display player
+        components.html(track_embed_code, height=352)
+
+
+
 # Initialize ags for recommendation
 seeds = track_ids
 recommended_track_params = build_params(seeds)
@@ -232,38 +275,22 @@ url = "https://api.reccobeats.com/v1/track/recommendation"
 st.header("Let the magic works :sparkles:", divider = 'green')
 left, middle, right = st.columns(3)
 recommendation = get_recommendation(url, recommended_track_params)
-if middle.button("Generate my tracks", icon="🎶"):
-    # recommendation = get_recommendation(url, recommended_track_params)
 
-    # Display the recommended tracks
+if middle.button("Generate my track", icon="🎶"):
     
+    # Display the recommended tracks
     st.dataframe(recommendation, hide_index=True)
 
-############################### Save tracks to user's liked songs playlist ########################################
+    # Display players
+    play_track(recommendation)
 
-
-# Save track for current user (to liked song playlist)
-def save_track_to_liked_songs(recommendation):
-
-    # Authenticate to API with the appropriate scope
-    sp = api_spotify_auth("user-library-modify")
-
-    # Retrieve Ids from Spotify URLS in recommendation dico
-    recommended_track_spotify_id = []
-    track_number = len(recommendation)
-    for i in range(track_number):
-        track_spotify_URL = recommendation[i]['URL']
-        track_spotify_id = re.split("/", track_spotify_URL)[-1]
-        recommended_track_spotify_id.append(track_spotify_id)
-    response = sp.current_user_saved_tracks_add(tracks=recommended_track_spotify_id)
-    return response
-
-# Save tracks
-st.header("Love the tracks?", divider = 'green')
-left, middle, right = st.columns(3)
-if middle.button("Save my tracks", icon="💾"):
+#Save tracks
+# left, middle, right = st.columns(3)
+# if middle.button("Save it to my Playlist", icon="💾"):
     
-    #Save tracks
-    saving_track = save_track_to_liked_songs(recommendation)
-    if saving_track == None:
-        st.write("Your tracks have been saved! 🎉")
+#     #Save tracks
+#     saving_track = save_track_to_liked_songs(recommendation)
+
+#     # Post successful
+#     if saving_track == None:
+#         st.write("Your track have been saved! 🎉")
