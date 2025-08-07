@@ -15,4 +15,4 @@ data/
 
 
 # Fichiers générés par Streamlit
-.streamlit/
+.streamlit/secrets.toml
