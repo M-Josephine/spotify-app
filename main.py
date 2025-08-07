@@ -265,12 +265,11 @@ track_ids = get_top_tracks(time_range, track_nb, offset, sp)
 # Initialize ags for recommendation
 seeds = track_ids
 recommended_track_params = build_params(seeds)
-
-# # Display summary of selection
-# st.header("Summary of your selection", divider = True)
-# display_summary(recommended_track_params)
-
 url = "https://api.reccobeats.com/v1/track/recommendation"
+
+# Display summary of selection
+st.header("Summary of your selection", divider = "green")
+display_summary(recommended_track_params)
 
 # Generate a list a recommended tracks
 st.header("Let the magic works :sparkles:", divider = 'green')
