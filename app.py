@@ -1,6 +1,6 @@
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
-import cred
+#import cred
 import streamlit as st
 import pandas as pd
 import re
@@ -18,7 +18,7 @@ st.title("Pimp my track :sunglasses:")
 # Get user top tracks
 
 def api_spotify_auth(scope):
-    sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=cred.client_id, client_secret= cred.client_secret, redirect_uri=cred.redirect_url, scope=scope))
+    sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=st.secrets.spotify_api_credentials.client_id, client_secret= st.secrets.spotify_api_credentials.client_secret, redirect_uri=st.secrets.spotify_api_credentials.redirect_url, scope=scope))
     return sp
 
 def get_top_tracks(time_range, track_nb, offset, sp):

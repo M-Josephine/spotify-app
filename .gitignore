@@ -1,0 +1,17 @@
+# Fichiers et dossiers spécifiques à l'environnement Python
+__pycache__/
+*.pyc
+.venv/
+env/
+venv/
+
+# Fichiers de données sensibles ou générés
+.env*
+config.ini
+keys.json
+secrets.toml
+data/
+
+
+# Fichiers générés par Streamlit
+.streamlit/
