@@ -210,11 +210,12 @@ def get_recommendation(url, recommended_track_params):
         recommended_track_name = recommended_track['content'][i]['trackTitle']
         recommended_track_artist = recommended_track['content'][i]['artists'][0]['name']
         recommended_track_spotify_url = recommended_track['content'][i]['href']
+        #recommended_track_popularity = recommended_track['content'][i]['popularity']
         recommended_track_details.append({
                         "Title": recommended_track_name,
                         "Artist": recommended_track_artist,
                         "URL": recommended_track_spotify_url
-                        #"ID" : track_id
+                        #"Popularity" : recommended_track_popularity
                     })
     return recommended_track_details
 
@@ -279,14 +280,14 @@ def play_track(recommendation):
         track_embed_code = f"""
             <iframe style="border-radius:12px" 
                     src="https://open.spotify.com/embed/track/{track_spotify_id}" 
-                    width="100%" height="352" 
+                    width="100%" height="200" 
                     frameBorder="0" allowfullscreen="" 
                     allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
                     loading="lazy"></iframe>
             """
     
         # Display player
-        components.html(track_embed_code, height=352)
+        components.html(track_embed_code, height=200)
 
 
 ############################### RUN GET TOP TRACKS + RECOMMENDATION + PLAYER ########################################
