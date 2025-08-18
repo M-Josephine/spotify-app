@@ -71,7 +71,7 @@ def get_top_tracks(time_range, track_nb, offset, sp):
                     frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
         """
         #with col3:
-        components.html(embed_code, height=100)
+        components.html(embed_code, height=100, width=500)
     
     return track_ids
 
@@ -287,7 +287,7 @@ def play_track(recommendation):
             """
     
         # Display player
-        components.html(track_embed_code, height=200)
+        components.html(track_embed_code, height=200, width=500)
 
 
 ############################### RUN GET TOP TRACKS + RECOMMENDATION + PLAYER ########################################
