@@ -7,7 +7,7 @@ data:
     http_address = "0.0.0.0:4180"
     upstreams = ["http://127.0.0.1:8501/"]
     email_domains = ["*"]
-    redirect_url = http://portfolio-mjo.com/oauth2/callback
+    redirect_url = "https://portfolio-mjo.com/oauth2/callback"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -31,16 +31,16 @@ spec:
           args: ["--config", "/etc/oauth2-proxy/oauth2-proxy.cfg"]
           ports:
             - containerPort: 4180
-          livenessProbe:
-            httpGet:
-              path: /ping
-              port: 4180
-              scheme: HTTP
-          readinessProbe:
-            httpGet:
-              path: /ping
-              port: 4180
-              scheme: HTTP
+          # livenessProbe:
+          #   httpGet:
+          #     path: /ping
+          #     port: 4180
+          #     scheme: HTTP
+          # readinessProbe:
+          #   httpGet:
+          #     path: /ping
+          #     port: 4180
+          #     scheme: HTTP
           env:
           - name: OAUTH2_PROXY_CLIENT_ID
             valueFrom:
