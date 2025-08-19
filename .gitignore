@@ -10,6 +10,7 @@ venv/
 config.ini
 keys.json
 secrets.toml
+oauth2-proxy-secrets.yaml
 data/
 .cache
 

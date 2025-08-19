@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: streamlit-ingress
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.global-static-ip-name: "34.98.74.138"
+    networking.gke.io/managed-certificates: "streamlit-certificate"
+    kubernetes.io/ingress.allow-http: "true"
+spec:
+  tls:
+    - hosts:
+        - portfolio-mjo.com
+      secretName: "streamlit-certificate"
+  defaultBackend:
+    service:
+      name: streamlit-service
+      port:
+        number: 80
