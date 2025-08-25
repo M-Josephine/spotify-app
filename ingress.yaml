@@ -4,14 +4,10 @@ metadata:
   name: streamlit-ingress
   annotations:
     kubernetes.io/ingress.class: "gce"
-    kubernetes.io/ingress.global-static-ip-name: "34.98.74.138"
+    kubernetes.io/ingress.global-static-ip-name: "your-static-ip"
     networking.gke.io/managed-certificates: "streamlit-certificate"
     kubernetes.io/ingress.allow-http: "true"
 spec:
-  tls:
-    - hosts:
-        - portfolio-mjo.com
-      secretName: "streamlit-certificate"
   defaultBackend:
     service:
       name: streamlit-service
