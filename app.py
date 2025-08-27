@@ -6,7 +6,7 @@ import pandas as pd
 import re
 import requests
 import streamlit.components.v1 as components
-
+import os
 
 # Main script
 ############################### Header ########################################
@@ -15,19 +15,75 @@ st.title("Pimp my track :sunglasses:")
 st.write('The recommended track will be generated based on your Spotify top tracks, as well as song attributes such as danceability or popularity, that you will be able to tune a little further.')
 
 ############################### GET TOP TRACKS ########################################
+# Authenticate to Spotify API
+# Set variables based on secrets file
+SPOTIFY_CLIENT_ID = st.secrets.spotify_api_credentials.client_id
+SPOTIFY_CLIENT_SECRET = st.secrets.spotify_api_credentials.client_secret
+SPOTIFY_REDIRECT_URI = st.secrets.spotify_api_credentials.redirect_url
+
+# Initialize session_state keys sp and token_info
+if 'sp' not in st.session_state:
+    st.session_state.sp = None
+if 'token_info' not in st.session_state:
+    st.session_state.token_info = None
+
+# Define auth_manager
+def get_auth_manager():
+    scopes = ["user-top-read", "user-library-read", "playlist-read-private", "user-top-read", "user-read-private"] 
+    return SpotifyOAuth(
+        client_id=SPOTIFY_CLIENT_ID,
+        client_secret=SPOTIFY_CLIENT_SECRET,
+        redirect_uri=SPOTIFY_REDIRECT_URI,
+        scope=" ".join(scopes)
+    )
+
+# Get auth code from URL
+query_params = st.query_params
+auth_code = query_params.get("code")
+
+# Check for authentication code and token
+if auth_code and st.session_state.token_info is None:
+    auth_manager = get_auth_manager()
+    token_info = auth_manager.get_access_token(auth_code, as_dict=True)
+    st.session_state.token_info = token_info
+    st.session_state.sp = spotipy.Spotify(auth=token_info['access_token'])
+    st.rerun()
+
+# Check if user is authenticated (sp object exists)
+if st.session_state.sp:
+    try:
+        # Display user name to confirm authentification
+        user_info = st.session_state.sp.me()
+        st.write(f"Connected as : {user_info['display_name']} 🎉")
+
+    except spotipy.exceptions.SpotifyException:
+        # Invalid/expired token, re-initialize session
+        st.error("Invalid token, please log in again.")
+        st.session_state.sp = None
+        st.session_state.token_info = None
+        st.rerun()
+else:
+    # Display log in button
+    st.header("Please, login to your Spotify account.")
+    auth_url = get_auth_manager().get_authorize_url()
+    st.markdown(f'<a href="{auth_url}" target="_self">Click here to login to your Spotify account.</a>', unsafe_allow_html=True)
+    st.stop() # stop the script here if the user is not authentified
+
+
+
+# def api_spotify_auth(scope):
+#     sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=st.secrets.spotify_api_credentials.client_id, client_secret= st.secrets.spotify_api_credentials.client_secret, redirect_uri=st.secrets.spotify_api_credentials.redirect_url, scope=scope))
+#     return sp
+
+
 
 # Get user top tracks
 
-# Authenticate to Spotify API
-def api_spotify_auth(scope):
-    sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=st.secrets.spotify_api_credentials.client_id, client_secret= st.secrets.spotify_api_credentials.client_secret, redirect_uri=st.secrets.spotify_api_credentials.redirect_url, scope=scope))
-    return sp
-
 # Get 5 top tracks
-def get_top_tracks(time_range, track_nb, offset, sp):
+def get_top_tracks(time_range, track_nb, offset):
 
     # API response
-    top_tracks = sp.current_user_top_tracks(limit=track_nb, offset=offset, time_range=time_range)
+    top_tracks = st.session_state.sp.current_user_top_tracks(limit=track_nb, offset=offset, time_range=time_range)
     
     # Create dataframe and list of ids
     track_details = []
@@ -309,14 +365,10 @@ time_range_mapping = {
 time_range= time_range_mapping.get(time_range_widget)
 track_nb = 5
 offset = 0
-scope = "user-top-read"
 
-# Auth Spotify API
-sp = api_spotify_auth(scope)
-
-# Retrive 5 top tracks IDs (and display in dataframe)
+# Retrieve 5 top tracks IDs (and display in dataframe)
 st.markdown("<br>", unsafe_allow_html=True)
-track_ids = get_top_tracks(time_range, track_nb, offset, sp)
+track_ids = get_top_tracks(time_range, track_nb, offset)
 
 
 # Initialize ags for recommendation
