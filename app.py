@@ -7,6 +7,9 @@ import re
 import requests
 import streamlit.components.v1 as components
 import os
+import uuid
+from spotipy.cache_handler import MemoryCacheHandler
+
 
 # Main script
 ############################### Header ########################################
@@ -22,10 +25,22 @@ SPOTIFY_CLIENT_SECRET = st.secrets.spotify_api_credentials.client_secret
 SPOTIFY_REDIRECT_URI = st.secrets.spotify_api_credentials.redirect_url
 
 # Initialize session_state keys sp and token_info
-if 'sp' not in st.session_state:
-    st.session_state.sp = None
-if 'token_info' not in st.session_state:
-    st.session_state.token_info = None
+# if 'sp' not in st.session_state:
+#     st.session_state.sp = None
+# if 'token_info' not in st.session_state:
+#     st.session_state.token_info = None
+
+# Initialize unique session id
+if "session_id" not in st.session_state:
+    st.session_state.session_id = str(uuid.uuid4())
+
+# Initialize user_sessions dict if not exists
+if "user_sessions" not in st.session_state:
+    st.session_state.user_sessions = {}
+
+# Per-session in-memory OAuth cache (prevents shared .cache file)
+if "oauth_cache" not in st.session_state:
+    st.session_state.oauth_cache = MemoryCacheHandler()  # unique to this Streamlit session
 
 # Define auth_manager
 def get_auth_manager():
@@ -34,26 +49,62 @@ def get_auth_manager():
         client_id=SPOTIFY_CLIENT_ID,
         client_secret=SPOTIFY_CLIENT_SECRET,
         redirect_uri=SPOTIFY_REDIRECT_URI,
-        scope=" ".join(scopes)
+        scope=" ".join(scopes),
+        cache_handler=st.session_state.oauth_cache,
     )
+
+# ------------- Logout (sidebar) -------------
+with st.sidebar:
+    st.caption(f"Session: {st.session_state.session_id[:8]}")
+    if st.button("Logout"):
+        # Clear per-user objects
+        st.session_state.user_sessions.pop(st.session_state.session_id, None)
+        st.session_state.oauth_cache = MemoryCacheHandler()
+        # Clear OAuth params in URL (compat across Streamlit versions)
+        try:
+            st.query_params.clear()
+        except Exception:
+            st.experimental_set_query_params()
+        st.success("Logged out.")
+        st.rerun()
 
 # Get auth code from URL
 query_params = st.query_params
 auth_code = query_params.get("code")
+if isinstance(auth_code, list):
+    auth_code = auth_code[0] if auth_code else None
 
 # Check for authentication code and token
-if auth_code and st.session_state.token_info is None:
+# if auth_code and st.session_state.token_info is None:
+if auth_code and (st.session_state.session_id not in st.session_state.user_sessions):
+
     auth_manager = get_auth_manager()
     token_info = auth_manager.get_access_token(auth_code, as_dict=True)
-    st.session_state.token_info = token_info
-    st.session_state.sp = spotipy.Spotify(auth=token_info['access_token'])
+
+    sp_client = spotipy.Spotify(auth_manager=auth_manager)
+    
+    st.session_state.user_sessions[st.session_state.session_id] = {
+        "token_info": token_info,
+        "auth_manager": auth_manager,
+        "sp": sp_client,
+    }
+    # st.session_state.token_info = token_info
+    # st.session_state.sp = spotipy.Spotify(auth=token_info['access_token'])
+    try:
+        st.query_params.clear()
+    except Exception:
+        st.experimental_set_query_params()
+
     st.rerun()
 
 # Check if user is authenticated (sp object exists)
-if st.session_state.sp:
+if st.session_state.session_id in st.session_state.user_sessions:
     try:
-        # Display user name to confirm authentification
-        user_info = st.session_state.sp.me()
+        user_session = st.session_state.user_sessions[st.session_state.session_id]
+        sp = user_session["sp"]
+
+        # Display user name to confirm authentication
+        user_info = sp.me()
         st.write(f"Connected as : {user_info['display_name']} 🎉")
         st.success("Login successful!")
 
@@ -63,7 +114,7 @@ if st.session_state.sp:
         def get_top_tracks(time_range, track_nb, offset):
 
             # API response
-            top_tracks = st.session_state.sp.current_user_top_tracks(limit=track_nb, offset=offset, time_range=time_range)
+            top_tracks = sp.current_user_top_tracks(limit=track_nb, offset=offset, time_range=time_range)
             
             # Create dataframe and list of ids
             track_details = []
@@ -354,15 +405,20 @@ if st.session_state.sp:
             # Display players
             play_track(recommendation)
 
-    except spotipy.exceptions.SpotifyException:
-            # Invalid/expired token, re-initialize session
-            st.error("Invalid token, please log in again.")
-            st.session_state.sp = None
-            st.session_state.token_info = None
-            st.rerun()
+    except spotipy.exceptions.SpotifyException as e:
+        st.error("Invalid/expired token, please log in again.")
+        # Clean user session
+        st.session_state.user_sessions.pop(st.session_state.session_id, None)
+        st.session_state.oauth_cache = MemoryCacheHandler()
+        st.rerun()
 else:
-    # Display log in button
+    # Not authenticated yet: create an authorize URL
+    auth_manager = get_auth_manager()
+    auth_url = auth_manager.get_authorize_url()
+    auth_url += "&show_dialog=true"
     st.header("Please, login to your Spotify account.")
-    auth_url = get_auth_manager().get_authorize_url()
-    st.markdown(f'<a href="{auth_url}" target="_self">Click here to login to your Spotify account.</a>', unsafe_allow_html=True)
-    st.stop() # stop the script here if the user is not authentified
+    st.markdown(
+        f'<a href="{auth_url}" target="_self">Click here to login to your Spotify account.</a>',
+        unsafe_allow_html=True
+    )
+    st.stop()
