@@ -1,0 +1,54 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - preprod
+      - develop
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Authenticate Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: 'pool-github'
+          service_account: 'github-actions-ci-cd@pimp-my-track-app.iam.gserviceaccount.com'
+
+      - name: Build and Push Docker Image
+        id: build
+        uses: docker/build-push-action@v4
+        with:
+          push: true
+          tags: gcr.io/pimp-my-track-app/${{ github.sha }}
+
+      - name: Deploy to Dev
+        if: github.ref == 'refs/heads/develop'
+        uses: google-github-actions/deploy-cloudrun@v1
+        with:
+          service: 'pimp-my-track-dev'
+          image: gcr.io/pimp-my-track-app/${{ github.sha }}
+
+      - name: Deploy to Preprod
+        if: github.ref == 'refs/heads/preprod'
+        uses: google-github-actions/deploy-cloudrun@v1
+        with:
+          service: 'pimp-my-track-preprod'
+          image: gcr.io/pimp-my-track-app/${{ github.sha }}
+
+      - name: Deploy to Prod
+        if: github.ref == 'refs/heads/main'
+        uses: google-github-actions/deploy-cloudrun@v1
+        with:
+          service: 'pimp-my-track'
+          image: gcr.io/pimp-my-track-app/${{ github.sha }}
