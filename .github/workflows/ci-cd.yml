@@ -22,7 +22,7 @@ jobs:
         id: auth
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: 'pool-github'
+          workload_identity_provider: 'principal://iam.googleapis.com/projects/933433206162/locations/global/workloadIdentityPools/pool-github/subject/repo:m-josephine/spotify-app'
           service_account: 'github-actions-ci-cd@pimp-my-track-app.iam.gserviceaccount.com'
 
       - name: Build and Push Docker Image
