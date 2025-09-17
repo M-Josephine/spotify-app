@@ -26,12 +26,8 @@ jobs:
           service_account: 'github-actions-ci-cd@pimp-my-track-app.iam.gserviceaccount.com'
           create_credentials_file: true
 
-      - name: Log in to Artifact Registry
-        uses: docker/login-action@v2
-        with:
-          registry: us-central1-docker.pkg.dev
-          username: _json_key
-          password: ${{ steps.auth.outputs.access_token }}
+      - name: Configure Docker to use gcloud
+        run: gcloud auth configure-docker gcr.io
 
       - name: Build and Push Docker Image
         id: build
