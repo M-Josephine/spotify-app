@@ -26,8 +26,12 @@ jobs:
           service_account: 'github-actions-ci-cd@pimp-my-track-app.iam.gserviceaccount.com'
           create_credentials_file: true
 
-      - name: Configure Docker to use gcloud
-        run: gcloud auth configure-docker gcr.io
+      - name: Login to Google Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: gcr.io
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
 
       - name: Build and Push Docker Image
         id: build
