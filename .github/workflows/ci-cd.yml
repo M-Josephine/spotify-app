@@ -25,6 +25,7 @@ jobs:
           workload_identity_provider: 'projects/933433206162/locations/global/workloadIdentityPools/pool-github/providers/github'
           service_account: 'github-actions-ci-cd@pimp-my-track-app.iam.gserviceaccount.com'
           create_credentials_file: true
+          token_format: 'access_token'
 
       - name: Login to Google Container Registry
         uses: docker/login-action@v2
