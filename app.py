@@ -10,7 +10,7 @@ import os
 import uuid
 from spotipy.cache_handler import MemoryCacheHandler
 
-
+# Test de mise à jour du token GitHub - 2026
 # Main script
 ############################### Header ########################################
 
